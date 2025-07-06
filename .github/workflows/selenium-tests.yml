@@ -1,0 +1,200 @@
+name: Selenium Grid Tests
+
+# Triggers del workflow
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Ejecutar diariamente a las 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  MAVEN_OPTS: "-Xmx3072m"
+  JAVA_VERSION: '17'
+
+jobs:
+  selenium-tests:
+    name: Cross-Browser Testing
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        browser: [chrome, firefox]
+      fail-fast: false
+
+    steps:
+      # 1. Checkout del código
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Setup de Java
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      # 3. Verificar Docker
+      - name: Verify Docker Installation
+        run: |
+          docker --version
+          docker-compose --version
+
+      # 4. Iniciar Selenium Grid
+      - name: Start Selenium Grid
+        run: |
+          echo "🚀 Starting Selenium Grid..."
+          docker-compose up -d
+          echo "⏳ Waiting for Grid to be ready..."
+          sleep 30
+
+      # 5. Verificar estado del Grid
+      - name: Verify Grid Status
+        run: |
+          echo "🔍 Checking Grid status..."
+          curl -f http://localhost:4444/wd/hub/status || exit 1
+          docker-compose ps
+
+      # 6. Compilar proyecto
+      - name: Compile Project
+        run: |
+          echo "🔨 Compiling Maven project..."
+          mvn clean compile -q
+
+      # 7. Ejecutar tests por navegador
+      - name: Run Selenium Tests - ${{ matrix.browser }}
+        run: |
+          echo "🧪 Running tests for ${{ matrix.browser }}..."
+          mvn test -Dbrowser=${{ matrix.browser }} -Dmaven.test.failure.ignore=true
+        continue-on-error: true
+
+      # 8. Generar reporte Allure
+      - name: Generate Allure Report
+        if: always()
+        run: |
+          echo "📊 Generating Allure report..."
+          mvn allure:report
+
+      # 9. Subir resultados de test
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.browser }}
+          path: |
+            target/surefire-reports/
+            target/allure-results/
+            target/allure-reports/
+          retention-days: 30
+
+      # 10. Publicar reporte de tests
+      - name: Publish Test Results
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Test Results - ${{ matrix.browser }}
+          path: target/surefire-reports/*.xml
+          reporter: java-junit
+
+      # 11. Logs de debug en caso de fallo
+      - name: Debug - Show Grid Logs
+        if: failure()
+        run: |
+          echo "🔍 Showing Grid logs for debugging..."
+          docker-compose logs selenium-hub
+          docker-compose logs chrome-node
+          docker-compose logs firefox-node
+
+      # 12. Cleanup
+      - name: Cleanup Selenium Grid
+        if: always()
+        run: |
+          echo "🧹 Cleaning up..."
+          docker-compose down
+          docker system prune -f
+
+  # Job adicional para análisis de código con SonarQube
+  code-analysis:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+    needs: selenium-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Para análisis de SonarQube
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run SonarQube Analysis
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          mvn clean compile sonar:sonar \
+            -Dsonar.projectKey=selenium-grid-tests \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.organization=your-org
+
+  # Job para deployment (solo en main)
+  deploy:
+    name: Deploy to AWS
+    runs-on: ubuntu-latest
+    needs: [selenium-tests, code-analysis]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy to ECS
+        run: |
+          echo "🚀 Deploying to AWS ECS..."
+          aws ecs update-service \
+            --cluster selenium-grid-cluster \
+            --service selenium-grid-service \
+            --force-new-deployment
+
+  # Job para notificaciones
+  notify:
+    name: Send Notifications
+    runs-on: ubuntu-latest
+    needs: [selenium-tests, code-analysis]
+    if: always()
+
+    steps:
+      - name: Slack Notification - Success
+        if: needs.selenium-tests.result == 'success'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: "✅ Selenium Grid tests passed successfully!"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Slack Notification - Failure
+        if: needs.selenium-tests.result == 'failure'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: "❌ Selenium Grid tests failed!"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
