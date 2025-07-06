@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+CONFIGURACIÓN OPTIMIZADA PARA SELENIUM GRID
+- 2 navegadores (Chrome + Firefox)
+- Ejecución en paralelo por métodos
+- Thread count optimizado para Docker
+- Timeout configurado para tests web
+- Allure reporting integrado
+-->
+
+<suite name="SeleniumGridOptimizedSuite"
+       parallel="methods"
+       thread-count="4"
+       verbose="1"
+       data-provider-thread-count="2"
+       time-out="300000">
+
+    <!-- Listeners para Allure reporting -->
+    <listeners>
+        <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+    </listeners>
+
+    <!-- Test principal con ambos navegadores -->
+    <test name="CrossBrowserTests" preserve-order="false">
+        <classes>
+            <class name="QuickTestCorrectedAllureTest"/>
+        </classes>
+    </test>
+
+</suite>
+
+        <!--
+        ALTERNATIVA: Configuración por navegador separado
+        Descomenta esta sección si prefieres ejecutar navegadores por separado
+        -->
+
+        <!--
+        <suite name="SeleniumGridSeparatedSuite"
+               parallel="tests"
+               thread-count="2"
+               verbose="1">
+
+            <listeners>
+                <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+            </listeners>
+
+            <test name="ChromeTests" preserve-order="false">
+                <classes>
+                    <class name="QuickTestCorrectedAllureTest">
+                        <methods>
+                            <include name="testChrome"/>
+                        </methods>
+                    </class>
+                </classes>
+            </test>
+
+            <test name="FirefoxTests" preserve-order="false">
+                <classes>
+                    <class name="QuickTestCorrectedAllureTest">
+                        <methods>
+                            <include name="testFirefox"/>
+                        </methods>
+                    </class>
+                </classes>
+            </test>
+
+        </suite>
+        -->
+
+        <!--
+        CONFIGURACIÓN AVANZADA: Con grupos y prioridades
+        Descomenta si quieres usar grupos de tests
+        -->
+
+        <!--
+        <suite name="SeleniumGridAdvancedSuite"
+               parallel="methods"
+               thread-count="3"
+               verbose="1">
+
+            <listeners>
+                <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+            </listeners>
+
+            <test name="SmokeTests" preserve-order="false" priority="1">
+                <groups>
+                    <run>
+                        <include name="smoke"/>
+                        <include name="critical"/>
+                    </run>
+                </groups>
+                <classes>
+                    <class name="QuickTestCorrectedAllureTest"/>
+                </classes>
+            </test>
+
+            <test name="RegressionTests" preserve-order="false" priority="2">
+                <groups>
+                    <run>
+                        <include name="regression"/>
+                        <exclude name="flaky"/>
+                    </run>
+                </groups>
+                <classes>
+                    <class name="QuickTestCorrectedAllureTest"/>
+                </classes>
+            </test>
+
+        </suite>
+        -->

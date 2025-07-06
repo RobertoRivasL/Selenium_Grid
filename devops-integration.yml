@@ -1,0 +1,436 @@
+# docker-compose-devops.yml
+# Configuración extendida para integrar con herramientas DevOps
+version: '3.8'
+
+services:
+  # Selenium Grid Services
+  selenium-hub:
+    image: selenium/hub:4.15.0
+    container_name: selenium-hub
+    ports:
+      - "4442:4442"
+      - "4443:4443"
+      - "4444:4444"
+    environment:
+      - GRID_MAX_SESSION=16
+      - GRID_BROWSER_TIMEOUT=300
+      - GRID_TIMEOUT=300
+    networks:
+      - selenium-grid
+      - devops-network
+
+  chrome-node:
+    image: selenium/node-chrome:4.15.0
+    container_name: chrome-node
+    depends_on:
+      - selenium-hub
+    environment:
+      - HUB_HOST=selenium-hub
+      - HUB_PORT=4444
+      - NODE_MAX_INSTANCES=4
+      - NODE_MAX_SESSION=4
+    ports:
+      - "5900:5900"
+    volumes:
+      - /dev/shm:/dev/shm
+      - ./test-results:/tmp/test-results
+    networks:
+      - selenium-grid
+
+  firefox-node:
+    image: selenium/node-firefox:4.15.0
+    container_name: firefox-node
+    depends_on:
+      - selenium-hub
+    environment:
+      - HUB_HOST=selenium-hub
+      - HUB_PORT=4444
+      - NODE_MAX_INSTANCES=4
+      - NODE_MAX_SESSION=4
+    ports:
+      - "5901:5900"
+    volumes:
+      - /dev/shm:/dev/shm
+      - ./test-results:/tmp/test-results
+    networks:
+      - selenium-grid
+
+  # Jenkins para CI/CD
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./jenkins/jobs:/var/jenkins_home/jobs
+    environment:
+      - JENKINS_OPTS=--httpPort=8080
+    networks:
+      - devops-network
+
+  # SonarQube para análisis de código
+  sonarqube:
+    image: sonarqube:community
+    container_name: sonarqube
+    depends_on:
+      - sonarqube-db
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_JDBC_URL=jdbc:postgresql://sonarqube-db:5432/sonar
+      - SONAR_JDBC_USERNAME=sonar
+      - SONAR_JDBC_PASSWORD=sonar
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    networks:
+      - devops-network
+
+  # Base de datos para SonarQube
+  sonarqube-db:
+    image: postgres:13
+    container_name: sonarqube-db
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar
+      - POSTGRES_DB=sonar
+    volumes:
+      - sonarqube_db:/var/lib/postgresql/data
+    networks:
+      - devops-network
+
+  # Allure para reportes de tests
+  allure:
+    image: frankescobar/allure-docker-service
+    container_name: allure
+    ports:
+      - "5050:5050"
+    environment:
+      - CHECK_RESULTS_EVERY_SECONDS=1
+    volumes:
+      - ./allure-results:/app/allure-results
+      - ./allure-reports:/app/default-reports
+    networks:
+      - devops-network
+
+  # JMeter para performance testing
+  jmeter:
+    image: justb4/jmeter:latest
+    container_name: jmeter
+    volumes:
+      - ./jmeter:/tests
+      - ./jmeter/results:/results
+    networks:
+      - devops-network
+    command: tail -f /dev/null  # Mantener contenedor activo
+
+  # Grafana para monitoreo
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - devops-network
+
+  # Prometheus para métricas
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - devops-network
+
+  # Selenium Grid Exporter para métricas
+  selenium-exporter:
+    image: wakeful/selenium-grid-exporter:latest
+    container_name: selenium-exporter
+    ports:
+      - "8080:8080"
+    environment:
+      - GRID_URL=http://selenium-hub:4444
+    depends_on:
+      - selenium-hub
+    networks:
+      - selenium-grid
+      - devops-network
+
+volumes:
+  jenkins_home:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:
+  sonarqube_db:
+  grafana_data:
+  prometheus_data:
+
+networks:
+  selenium-grid:
+    driver: bridge
+  devops-network:
+    driver: bridge
+
+---
+# Jenkinsfile para pipeline CI/CD
+  pipeline {
+  agent any
+  
+  environment {
+  MAVEN_HOME = tool 'Maven'
+  SONAR_HOST_URL = 'http://sonarqube:9000'
+  SONAR_TOKEN = credentials('sonar-token')
+  }
+  
+  stages {
+  stage('Checkout') {
+  steps {
+  checkout scm
+  }
+  }
+  
+  stage('Build') {
+  steps {
+  sh "${MAVEN_HOME}/bin/mvn clean compile"
+  }
+  }
+  
+  stage('Unit Tests') {
+  steps {
+  sh "${MAVEN_HOME}/bin/mvn test -Dtest=**/*UnitTest"
+  }
+  post {
+  always {
+  junit 'target/surefire-reports/*.xml'
+  }
+  }
+  }
+  
+  stage('SonarQube Analysis') {
+  steps {
+  sh """
+  ${MAVEN_HOME}/bin/mvn sonar:sonar \
+  -Dsonar.projectKey=selenium-grid-tests \
+  -Dsonar.host.url=${SONAR_HOST_URL} \
+  -Dsonar.login=${SONAR_TOKEN}
+  """
+  }
+  }
+  
+  stage('Start Selenium Grid') {
+  steps {
+  sh 'docker-compose up -d selenium-hub chrome-node firefox-node'
+  sh 'sleep 10'  // Esperar que el grid esté listo
+  }
+  }
+  
+  stage('Integration Tests') {
+  parallel {
+  stage('Chrome Tests') {
+  steps {
+  sh "${MAVEN_HOME}/bin/mvn test -Dbrowser=chrome -Dtest=**/*IntegrationTest"
+  }
+  }
+  stage('Firefox Tests') {
+  steps {
+  sh "${MAVEN_HOME}/bin/mvn test -Dbrowser=firefox -Dtest=**/*IntegrationTest"
+  }
+  }
+  }
+  post {
+  always {
+  junit 'target/surefire-reports/*.xml'
+  publishHTML([
+                                   allowMissing: false,
+                                   alwaysLinkToLastBuild: true,
+                                   keepAll: true,
+                                   reportDir: 'target/surefire-reports',
+                                   reportFiles: 'index.html',
+                                   reportName: 'Test Results'
+])
+}
+}
+}
+
+  stage('Performance Tests') {
+  steps {
+  sh """
+  docker exec jmeter jmeter \
+  -n -t /tests/load-test.jmx \
+  -l /results/results.jtl \
+  -e -o /results/html-report
+  """
+            }
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'jmeter/results/html-report',
+                        reportFiles: 'index.html',
+                        reportName: 'Performance Test Results'
+                    ])
+                }
+            }
+        }
+        
+        stage('Generate Allure Reports') {
+            steps {
+                sh 'allure generate allure-results -o allure-reports --clean'
+            }
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'allure-reports',
+                        reportFiles: 'index.html',
+                        reportName: 'Allure Report'
+                    ])
+                }
+            }
+        }
+        
+        stage('Deploy to AWS') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    // Ejemplo de deployment a AWS ECS
+                    sh """
+  aws ecs update-service \
+  --cluster selenium-grid-cluster \
+  --service selenium-grid-service \
+  --force-new-deployment
+  """
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            sh 'docker-compose down'
+        }
+        success {
+            slackSend channel: '#devops', 
+                     color: 'good', 
+                     message: "✅ Pipeline succeeded: ${env.JOB_NAME} - ${env.BUILD_NUMBER}"
+}
+  failure {
+                                   slackSend channel: '#devops',
+                                                        color: 'danger',
+                                                        message: "❌ Pipeline failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER}"
+}
+}
+}
+
+---
+# kubernetes-deployment.yml
+# Despliegue en Kubernetes
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: selenium-hub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: selenium-hub
+  template:
+    metadata:
+      labels:
+        app: selenium-hub
+    spec:
+      containers:
+        - name: selenium-hub
+          image: selenium/hub:4.15.0
+          ports:
+            - containerPort: 4444
+          env:
+            - name: GRID_MAX_SESSION
+              value: "16"
+            - name: GRID_BROWSER_TIMEOUT
+              value: "300"
+            - name: GRID_TIMEOUT
+              value: "300"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chrome-node
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: chrome-node
+  template:
+    metadata:
+      labels:
+        app: chrome-node
+    spec:
+      containers:
+        - name: chrome-node
+          image: selenium/node-chrome:4.15.0
+          env:
+            - name: HUB_HOST
+              value: "selenium-hub"
+            - name: HUB_PORT
+              value: "4444"
+            - name: NODE_MAX_INSTANCES
+              value: "4"
+            - name: NODE_MAX_SESSION
+              value: "4"
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: selenium-hub
+spec:
+  selector:
+    app: selenium-hub
+  ports:
+    - port: 4444
+      targetPort: 4444
+      protocol: TCP
+  type: LoadBalancer
