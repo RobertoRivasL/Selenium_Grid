@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- VARIABLES DE CONFIGURACIÓN -->
+    <property name="LOG_PATTERN" value="%d{HH:mm:ss.SSS} [%thread] %highlight(%-5level) %logger{25} - %msg%n"/>
+    <property name="FILE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
+
+    <!-- APPENDER PARA CONSOLA (LIMPIO Y LEGIBLE) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+        <!-- FILTRO: Solo INFO y superior para consola limpia -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+    </appender>
+
+    <!-- APPENDER PARA ARCHIVO (LOG COMPLETO) -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>target/logs/selenium-tests.log</file>
+        <append>false</append>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- APPENDER PARA ARCHIVO DE ERRORES -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>target/logs/selenium-errors.log</file>
+        <append>false</append>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- ================================ -->
+    <!-- CONFIGURACIÓN DE LOGGERS -->
+    <!-- ================================ -->
+
+    <!-- SELENIUM: Reducir verbosidad excesiva -->
+    <logger name="org.openqa.selenium" level="WARN" />
+    <logger name="org.openqa.selenium.remote" level="WARN" />
+    <logger name="org.openqa.selenium.support" level="WARN" />
+    <logger name="org.openqa.selenium.devtools" level="ERROR" />
+    <logger name="org.openqa.selenium.chrome" level="WARN" />
+    <logger name="org.openqa.selenium.firefox" level="WARN" />
+
+    <!-- HTTP CLIENTS: Reducir ruido de red -->
+    <logger name="org.apache.http" level="WARN" />
+    <logger name="org.asynchttpclient" level="WARN" />
+    <logger name="io.netty" level="WARN" />
+    <logger name="reactor.netty" level="WARN" />
+
+    <!-- TESTNG: Solo información relevante -->
+    <logger name="org.testng" level="INFO" />
+
+    <!-- ALLURE: Mínimo necesario -->
+    <logger name="io.qameta.allure" level="WARN" />
+
+    <!-- ASPECTJ: Reducir verbosidad -->
+    <logger name="org.aspectj" level="WARN" />
+
+    <!-- MAVEN: Solo errores -->
+    <logger name="org.apache.maven" level="ERROR" />
+
+    <!-- ================================ -->
+    <!-- TUS CLASES DE TEST: DEBUG COMPLETO -->
+    <!-- ================================ -->
+    <logger name="com.selenium.grid.test" level="DEBUG" />
+
+    <!-- ================================ -->
+    <!-- ROOT LOGGER -->
+    <!-- ================================ -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+        <appender-ref ref="ERROR_FILE" />
+    </root>
+
+</configuration>

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0
+          http://maven.apache.org/xsd/settings-1.2.0.xsd">
+
+    <!-- ================================ -->
+    <!-- FORZAR HTTPS PARA TODOS LOS REPOSITORIOS -->
+    <!-- ================================ -->
+
+    <mirrors>
+        <!-- Mirror central repository to HTTPS -->
+        <mirror>
+            <id>central-https</id>
+            <mirrorOf>central</mirrorOf>
+            <name>Central Repository HTTPS</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </mirror>
+
+        <!-- Mirror for any HTTP repository to HTTPS -->
+        <mirror>
+            <id>insecure-repo-blocker</id>
+            <mirrorOf>external:http:*</mirrorOf>
+            <name>Block HTTP repositories</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <blocked>true</blocked>
+        </mirror>
+    </mirrors>
+
+    <!-- ================================ -->
+    <!-- CONFIGURACIÓN DE REPOSITORIOS SEGUROS -->
+    <!-- ================================ -->
+
+    <profiles>
+        <profile>
+            <id>secure-repositories</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+
+            <repositories>
+                <repository>
+                    <id>central</id>
+                    <url>https://repo.maven.apache.org/maven2</url>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>daily</updatePolicy>
+                        <checksumPolicy>fail</checksumPolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
+
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>central</id>
+                    <url>https://repo.maven.apache.org/maven2</url>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>daily</updatePolicy>
+                        <checksumPolicy>fail</checksumPolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+    </profiles>
+
+    <!-- ================================ -->
+    <!-- CONFIGURACIÓN ADICIONAL DE SEGURIDAD -->
+    <!-- ================================ -->
+
+    <servers>
+        <!-- Configuración para repositorios que requieren autenticación -->
+        <server>
+            <id>central</id>
+            <configuration>
+                <httpConfiguration>
+                    <all>
+                        <connectionTimeout>10000</connectionTimeout>
+                        <readTimeout>10000</readTimeout>
+                    </all>
+                </httpConfiguration>
+            </configuration>
+        </server>
+    </servers>
+
+</settings>

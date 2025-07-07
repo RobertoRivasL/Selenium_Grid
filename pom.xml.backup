@@ -42,16 +42,13 @@
         <aspectj.version>1.9.20</aspectj.version>
 
         <!-- VERSIONES DE PLUGINS -->
-        <maven.surefire.version>3.1.2</maven.surefire.version>
+        <maven.surefire.version>3.2.2</maven.surefire.version>
         <allure.maven.version>2.12.0</allure.maven.version>
         <maven.compiler.version>3.11.0</maven.compiler.version>
 
         <!-- VERSIONES DE LOGGING (CORREGIDAS - SIN VULNERABILIDADES) -->
         <logback.version>1.5.18</logback.version>
         <slf4j.version>2.0.16</slf4j.version>
-
-        <!-- ===== JACOCO VERSION - AGREGADO ===== -->
-        <jacoco.maven.version>0.8.11</jacoco.maven.version>
     </properties>
 
     <repositories>
@@ -187,62 +184,6 @@
             </plugin>
 
             <!-- ================================ -->
-            <!-- JACOCO PLUGIN - AGREGADO -->
-            <!-- ================================ -->
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco.maven.version}</version>
-                <executions>
-                    <!-- Preparar agente JaCoCo antes de ejecutar tests -->
-                    <execution>
-                        <id>prepare-agent</id>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-
-                    <!-- Generar reporte después de ejecutar tests -->
-                    <execution>
-                        <id>report</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-
-                    <!-- Verificar cobertura mínima (opcional) -->
-                    <execution>
-                        <id>check</id>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <rule>
-                                    <element>BUNDLE</element>
-                                    <limits>
-                                        <limit>
-                                            <counter>INSTRUCTION</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.50</minimum> <!-- 50% cobertura mínima -->
-                                        </limit>
-                                    </limits>
-                                </rule>
-                            </rules>
-                        </configuration>
-                    </execution>
-                </executions>
-                <configuration>
-                    <!-- Excluir clases que no necesitan cobertura -->
-                    <excludes>
-                        <exclude>**/test/**</exclude>
-                        <exclude>**/config/**</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-
-            <!-- ================================ -->
             <!-- MAVEN SUREFIRE PLUGIN (TESTS) -->
             <!-- ================================ -->
             <plugin>
@@ -253,9 +194,8 @@
                     <!-- NO FALLAR BUILD POR TESTS -->
                     <testFailureIgnore>false</testFailureIgnore>
 
-                    <!-- ARGUMENTOS JVM MEJORADOS - MODIFICADO PARA JACOCO -->
+                    <!-- ARGUMENTOS JVM MEJORADOS -->
                     <argLine>
-                        @{argLine}
                         -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
                         -Dfile.encoding=UTF-8
                         -Djava.util.logging.manager=org.slf4j.bridge.SLF4JBridgeHandler
@@ -380,34 +320,6 @@
     </build>
 
     <!-- ================================ -->
-    <!-- REPORTING - AGREGADO PARA JACOCO -->
-    <!-- ================================ -->
-    <reporting>
-        <plugins>
-            <!-- Surefire Report Plugin -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>${maven.surefire.version}</version>
-            </plugin>
-
-            <!-- JaCoCo Report Plugin -->
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco.maven.version}</version>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <report>report</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-        </plugins>
-    </reporting>
-
-    <!-- ================================ -->
     <!-- PROFILES PARA DIFERENTES ENTORNOS -->
     <!-- ================================ -->
     <profiles>
@@ -443,34 +355,6 @@
                 <test.timeout>300</test.timeout>
                 <logback.root.level>DEBUG</logback.root.level>
             </properties>
-        </profile>
-
-        <!-- ===== PROFILE PARA COBERTURA - AGREGADO ===== -->
-        <profile>
-            <id>coverage</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.jacoco</groupId>
-                        <artifactId>jacoco-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>prepare-agent</id>
-                                <goals>
-                                    <goal>prepare-agent</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>report</id>
-                                <phase>test</phase>
-                                <goals>
-                                    <goal>report</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
 
     </profiles>
