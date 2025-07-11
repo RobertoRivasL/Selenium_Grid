@@ -9,7 +9,8 @@
 
     <test name="CrossBrowserTests" preserve-order="true">
         <classes>
-            <class name="QuickTestCorrectedAllureTest"/>
+            <class name="com.selenium.grid.test.SeleniumGridTest"/>
+            <class name="com.selenium.grid.test.QuickAllureTest"/>
         </classes>
     </test>
 

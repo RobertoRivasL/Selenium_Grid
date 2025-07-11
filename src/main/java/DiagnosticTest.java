@@ -9,7 +9,7 @@ import java.time.Duration;
 
 public class DiagnosticTest {
     public static void main(String[] args) throws Exception {
-        String hubUrl = "http://localhost:4444/wd/hub";
+        String hubUrl = "http://localhost:4444";
         
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--disable-dev-shm-usage");

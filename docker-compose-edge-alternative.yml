@@ -1,5 +1,9 @@
 version: '3.8'
 
+# CONFIGURACIÓN ALTERNATIVA PARA EDGE
+# Usa versión diferente y configuración más robusta
+# Para usar: docker-compose -f docker-compose-edge-alternative.yml up -d
+
 services:
   selenium-hub:
     image: selenium/hub:4.15.0
@@ -12,8 +16,14 @@ services:
       - SE_GRID_MAX_SESSION=16
       - SE_GRID_BROWSER_TIMEOUT=300
       - SE_GRID_SESSION_TIMEOUT=300
+      - SE_GRID_NEW_SESSION_WAIT_TIMEOUT=30
     networks:
       - selenium-grid
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4444/wd/hub/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   chrome-node:
     image: selenium/node-chrome:4.15.0
@@ -27,13 +37,15 @@ services:
       - SE_NODE_MAX_INSTANCES=3
       - SE_NODE_MAX_SESSIONS=3
       - SE_VNC_NO_PASSWORD=1
+      - SE_START_XVFB=false
     ports:
-      - "5900:5900"  # VNC
-      - "7900:7900"  # noVNC (navegador)
+      - "5900:5900"
+      - "7900:7900"
     volumes:
       - /dev/shm:/dev/shm
     networks:
       - selenium-grid
+    restart: unless-stopped
 
   firefox-node:
     image: selenium/node-firefox:4.15.0
@@ -47,43 +59,53 @@ services:
       - SE_NODE_MAX_INSTANCES=3
       - SE_NODE_MAX_SESSIONS=3
       - SE_VNC_NO_PASSWORD=1
+      - SE_START_XVFB=false
     ports:
-      - "5901:5900"  # VNC
-      - "7901:7900"  # noVNC (navegador)
+      - "5901:5900"
+      - "7901:7900"
     volumes:
       - /dev/shm:/dev/shm
     networks:
       - selenium-grid
+    restart: unless-stopped
 
+  # CONFIGURACIÓN ALTERNATIVA PARA EDGE
   edge-node:
-    image: selenium/node-edge:4.15.0
-    container_name: edge-node
+    image: selenium/node-edge:4.15.0  # Misma versión pero con config diferente
+    container_name: edge-node-alt
     depends_on:
-      - selenium-hub
+      selenium-hub:
+        condition: service_healthy
     environment:
       - SE_EVENT_BUS_HOST=selenium-hub
       - SE_EVENT_BUS_PUBLISH_PORT=4442
       - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
-      - SE_NODE_MAX_INSTANCES=3
-      - SE_NODE_MAX_SESSIONS=3
+      - SE_NODE_MAX_INSTANCES=2  # Reducido para estabilidad
+      - SE_NODE_MAX_SESSIONS=2
       - SE_VNC_NO_PASSWORD=1
+      - SE_START_XVFB=false
+      - SE_NODE_SESSION_TIMEOUT=300
+      - SE_SESSION_REQUEST_TIMEOUT=300
+      - SE_GRID_NEW_SESSION_WAIT_TIMEOUT=60
     ports:
-      - "5902:5900"  # VNC
-      - "7902:7900"  # noVNC (navegador)
+      - "5902:5900"
+      - "7902:7900"
     volumes:
       - /dev/shm:/dev/shm
     networks:
       - selenium-grid
+    restart: unless-stopped
+    # Healthcheck específico para Edge
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5555/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
 networks:
   selenium-grid:
     driver: bridge
 
-# Comandos útiles:
-# Iniciar: docker-compose up -d
-# Ver logs: docker-compose logs -f [service-name]
-# Parar: docker-compose down
-# VNC URLs:
-#   Chrome: vnc://localhost:5900 o http://localhost:7900
-#   Firefox: vnc://localhost:5901 o http://localhost:7901
-#   Edge: vnc://localhost:5902 o http://localhost:7902
+# Para usar este archivo:
+# docker-compose -f docker-compose-edge-alternative.yml up -d

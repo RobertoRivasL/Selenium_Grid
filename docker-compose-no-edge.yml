@@ -1,5 +1,9 @@
 version: '3.8'
 
+# CONFIGURACIÓN TEMPORAL SIN EDGE
+# Usar cuando Edge causa problemas
+# Para usar: docker-compose -f docker-compose-no-edge.yml up -d
+
 services:
   selenium-hub:
     image: selenium/hub:4.15.0
@@ -9,7 +13,7 @@ services:
       - "4443:4443"
       - "4444:4444"
     environment:
-      - SE_GRID_MAX_SESSION=16
+      - SE_GRID_MAX_SESSION=12
       - SE_GRID_BROWSER_TIMEOUT=300
       - SE_GRID_SESSION_TIMEOUT=300
     networks:
@@ -24,8 +28,8 @@ services:
       - SE_EVENT_BUS_HOST=selenium-hub
       - SE_EVENT_BUS_PUBLISH_PORT=4442
       - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
-      - SE_NODE_MAX_INSTANCES=3
-      - SE_NODE_MAX_SESSIONS=3
+      - SE_NODE_MAX_INSTANCES=4
+      - SE_NODE_MAX_SESSIONS=4
       - SE_VNC_NO_PASSWORD=1
     ports:
       - "5900:5900"  # VNC
@@ -44,8 +48,8 @@ services:
       - SE_EVENT_BUS_HOST=selenium-hub
       - SE_EVENT_BUS_PUBLISH_PORT=4442
       - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
-      - SE_NODE_MAX_INSTANCES=3
-      - SE_NODE_MAX_SESSIONS=3
+      - SE_NODE_MAX_INSTANCES=4
+      - SE_NODE_MAX_SESSIONS=4
       - SE_VNC_NO_PASSWORD=1
     ports:
       - "5901:5900"  # VNC
@@ -55,35 +59,9 @@ services:
     networks:
       - selenium-grid
 
-  edge-node:
-    image: selenium/node-edge:4.15.0
-    container_name: edge-node
-    depends_on:
-      - selenium-hub
-    environment:
-      - SE_EVENT_BUS_HOST=selenium-hub
-      - SE_EVENT_BUS_PUBLISH_PORT=4442
-      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
-      - SE_NODE_MAX_INSTANCES=3
-      - SE_NODE_MAX_SESSIONS=3
-      - SE_VNC_NO_PASSWORD=1
-    ports:
-      - "5902:5900"  # VNC
-      - "7902:7900"  # noVNC (navegador)
-    volumes:
-      - /dev/shm:/dev/shm
-    networks:
-      - selenium-grid
-
 networks:
   selenium-grid:
     driver: bridge
 
-# Comandos útiles:
-# Iniciar: docker-compose up -d
-# Ver logs: docker-compose logs -f [service-name]
-# Parar: docker-compose down
-# VNC URLs:
-#   Chrome: vnc://localhost:5900 o http://localhost:7900
-#   Firefox: vnc://localhost:5901 o http://localhost:7901
-#   Edge: vnc://localhost:5902 o http://localhost:7902
+# Para usar este archivo:
+# docker-compose -f docker-compose-no-edge.yml up -d

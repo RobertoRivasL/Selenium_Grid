@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+CONFIGURACIÓN SECUENCIAL PARA DEBUGGING
+- Chrome primero, luego Firefox, luego Edge
+- Útil para debugging individual
+-->
+
+<suite name="SeleniumGridSequentialSuite"
+       parallel="false"
+       verbose="1"
+       time-out="600000">
+
+    <listeners>
+        <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+    </listeners>
+
+    <!-- PRIMERO CHROME -->
+    <test name="Chrome-Sequential" preserve-order="true">
+        <parameter name="browser" value="chrome"/>
+        <classes>
+            <class name="com.selenium.grid.test.SeleniumGridTest">
+                <methods>
+                    <include name="testGoogleSearch"/>
+                    <include name="testSeleniumHQWebsite"/>
+                    <include name="testDuckDuckGoSearch"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- LUEGO FIREFOX -->
+    <test name="Firefox-Sequential" preserve-order="true">
+        <parameter name="browser" value="firefox"/>
+        <classes>
+            <class name="com.selenium.grid.test.SeleniumGridTest">
+                <methods>
+                    <include name="testGoogleSearch"/>
+                    <include name="testSeleniumHQWebsite"/>
+                    <include name="testDuckDuckGoSearch"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- FINALMENTE EDGE -->
+    <test name="Edge-Sequential" preserve-order="true">
+        <parameter name="browser" value="edge"/>
+        <classes>
+            <class name="com.selenium.grid.test.SeleniumGridTest">
+                <methods>
+                    <include name="testGoogleSearch"/>
+                    <include name="testSeleniumHQWebsite"/>
+                    <include name="testDuckDuckGoSearch"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+</suite>

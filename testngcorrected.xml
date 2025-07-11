@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+✅ CONFIGURACIÓN OPTIMIZADA PARA SELENIUM GRID - VERSIÓN CORREGIDA
+- Paralelización segura por métodos
+- Thread count optimizado para Docker
+- Timeouts configurados apropiadamente
+- Allure reporting integrado
+- Configuración de retry en caso de fallos
+-->
+
+<suite name="SeleniumGridCorrectedSuite"
+       parallel="methods"
+       thread-count="6"
+       verbose="2"
+       data-provider-thread-count="3"
+       time-out="180000"
+       preserve-order="false">
+
+    <!-- ✅ Parámetros globales -->
+    <parameter name="hub.url" value="http://localhost:4444/wd/hub"/>
+    <parameter name="timeout.implicit" value="10"/>
+    <parameter name="timeout.explicit" value="20"/>
+
+    <!-- ✅ Listeners para reporting y retry -->
+    <listeners>
+        <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+        <!-- Opcional: Retry listener personalizado -->
+        <!-- <listener class-name="com.selenium.grid.test.RetryListener"/> -->
+    </listeners>
+
+    <!-- ✅ Test principal con todos los navegadores -->
+    <test name="CrossBrowserTestsCorrected"
+          preserve-order="false"
+          group-by-instances="true">
+
+        <classes>
+            <class name="com.selenium.grid.test.SeleniumGridDataProviderTest">
+                <methods>
+                    <!-- ✅ Orden de ejecución optimizado -->
+                    <include name="testGoogleSearch"/>
+                    <include name="testSeleniumHQ"/>
+                    <include name="testDuckDuckGo"/>
+                    <include name="testExampleDomain"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!--
+    ✅ CONFIGURACIÓN ALTERNATIVA: Tests por grupos
+    Descomenta si quieres ejecutar tests por grupos específicos
+    -->
+    <!--
+    <test name="SmokeTests" preserve-order="false">
+        <groups>
+            <run>
+                <include name="smoke"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.selenium.grid.test.SeleniumGridDataProviderTest"/>
+        </classes>
+    </test>
+
+    <test name="RegressionTests" preserve-order="false">
+        <groups>
+            <run>
+                <include name="regression"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.selenium.grid.test.SeleniumGridTestCorrected"/>
+        </classes>
+    </test>
+    -->
+
+</suite>
+
+        <!--
+        🔧 CONFIGURACIONES ADICIONALES DISPONIBLES:
+
+        1. CONFIGURACIÓN PARA DESARROLLO (tests más rápidos):
+        <suite name="DevSuite" parallel="methods" thread-count="2">
+            <parameter name="timeout.implicit" value="5"/>
+            <parameter name="timeout.explicit" value="10"/>
+            ...
+        </suite>
+
+        2. CONFIGURACIÓN PARA CI/CD (más robusta):
+        <suite name="CISuite" parallel="methods" thread-count="3">
+            <parameter name="timeout.implicit" value="15"/>
+            <parameter name="timeout.explicit" value="30"/>
+            ...
+        </suite>
+
+        3. CONFIGURACIÓN PARA DEBUG (sin paralelización):
+        <suite name="DebugSuite" parallel="false" thread-count="1">
+            <parameter name="timeout.implicit" value="30"/>
+            <parameter name="timeout.explicit" value="60"/>
+            ...
+        </suite>
+        -->

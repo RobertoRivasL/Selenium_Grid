@@ -2,15 +2,14 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 
 <!--
-CONFIGURACIÓN COMPLETA - CHROME, FIREFOX Y EDGE
-- QuickAllureTest (con métodos testChrome/testFirefox)
-- SeleniumGridTest (con parámetros browser: chrome, firefox, edge)
-- Tests en paralelo
+SELENIUMGRIDTEST EN 3 NAVEGADORES
+- Chrome, Firefox Y Edge en paralelo
+- Usa parámetros browser
 -->
 
-<suite name="SeleniumGridCompleteSuite"
+<suite name="SeleniumGridTestTripleBrowser"
        parallel="tests"
-       thread-count="4"
+       thread-count="3"
        verbose="1"
        time-out="600000">
 
@@ -18,13 +17,6 @@ CONFIGURACIÓN COMPLETA - CHROME, FIREFOX Y EDGE
     <listeners>
         <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
     </listeners>
-
-    <!-- QUICKALLURETEST - Ya tiene métodos para Chrome y Firefox -->
-    <test name="QuickAllureTest-CrossBrowser" preserve-order="false">
-        <classes>
-            <class name="com.selenium.grid.test.QuickAllureTest"/>
-        </classes>
-    </test>
 
     <!-- SELENIUMGRIDTEST EN CHROME -->
     <test name="SeleniumGridTest-Chrome" preserve-order="false">
