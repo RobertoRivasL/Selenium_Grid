@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd
+              https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+
+    <!-- ================================ -->
+    <!-- OWASP DEPENDENCY-CHECK SUPPRESSIONS -->
+    <!-- ================================ -->
+
+    <!--
+    IMPORTANTE: Este archivo debe usarse SOLO para suprimir falsos positivos confirmados.
+    NUNCA suprimir vulnerabilidades reales sin antes aplicar las correcciones necesarias.
+
+    Documentación: https://dependency-check.github.io/DependencyCheck/general/suppression.html
+    -->
+
+    <!-- ===== EJEMPLO: SUPRIMIR FALSO POSITIVO ===== -->
+    <!--
+    <suppress>
+        <notes><![CDATA[
+        Falso positivo: Esta dependencia no es vulnerable en nuestro contexto de uso
+        Fecha: 2025-07-07
+        Revisado por: Roberto Rivas
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.example/example\-library@.*$</packageUrl>
+        <cve>CVE-2023-XXXXX</cve>
+    </suppress>
+    -->
+
+    <!-- ===== SUPRIMIR VULNERABILIDADES DE TESTING (SI ES NECESARIO) ===== -->
+    <!--
+    NOTA: Las dependencias de testing no se despliegan en producción,
+    pero aún así es recomendable mantenerlas actualizadas.
+    -->
+
+    <!-- Ejemplo: Suprimir vulnerabilidades en dependencias de testing scope -->
+    <!--
+    <suppress>
+        <notes><![CDATA[
+        Vulnerabilidad en dependencia de testing que no se despliega en producción.
+        Fecha: 2025-07-07
+        Revisado por: Roberto Rivas
+        Ticket de seguimiento: JIRA-1234
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/.*@.*$</packageUrl>
+        <scope>test</scope>
+        <cve>CVE-EJEMPLO-TESTING</cve>
+    </suppress>
+    -->
+
+    <!-- ===== SUPRIMIR POR SHA1 (MÁS ESPECÍFICO) ===== -->
+    <!--
+    <suppress>
+        <notes><![CDATA[
+        Suprimir vulnerabilidad específica en archivo particular
+        ]]></notes>
+        <sha1>1234567890abcdef1234567890abcdef12345678</sha1>
+        <cve>CVE-2023-XXXXX</cve>
+    </suppress>
+    -->
+
+    <!-- ===== SUPRIMIR POR CPE (IDENTIFICADOR DE PLATAFORMA) ===== -->
+    <!--
+    <suppress>
+        <notes><![CDATA[
+        Suprimir usando CPE (Common Platform Enumeration)
+        ]]></notes>
+        <cpe>cpe:/a:apache:log4j</cpe>
+        <cve>CVE-2023-XXXXX</cve>
+    </suppress>
+    -->
+
+    <!-- ===== TEMPLATE PARA NUEVAS SUPPRESSIONS ===== -->
+    <!--
+    TEMPLATE PARA COPY-PASTE:
+
+    <suppress>
+        <notes><![CDATA[
+        Razón de la suppression: [EXPLICAR DETALLADAMENTE]
+        Fecha: [YYYY-MM-DD]
+        Revisado por: [NOMBRE]
+        Ticket de seguimiento: [JIRA/GITHUB-ISSUE]
+        Fecha de revisión: [YYYY-MM-DD] (revisar en 6 meses)
+        ]]></notes>
+        <packageUrl>pkg:maven/groupId/artifactId@version</packageUrl>
+        <cve>CVE-YYYY-NNNNN</cve>
+    </suppress>
+    -->
+
+    <!-- ===== SUPRIMIR VULNERABILIDADES QUE YA FUERON CORREGIDAS ===== -->
+    <!--
+    Nota: Las vulnerabilidades CVE-2025-52999 y CVE-2023-35116 fueron corregidas
+    actualizando Jackson a versión 2.16.1 en el pom.xml refactorizado.
+    No es necesario suprimirlas aquí porque ya no deberían aparecer.
+    -->
+
+</suppressions>

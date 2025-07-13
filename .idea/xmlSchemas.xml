@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+    <component name="XmlSchemas">
+        <!-- Configuración para OWASP Dependency-Check Suppressions -->
+        <schema
+                url="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd"
+                file="owasp-suppressions.xml"
+                version="1.3" />
+
+        <!-- Schema alternativo local si el online no funciona -->
+        <schema
+                url="https://raw.githubusercontent.com/jeremylong/DependencyCheck/main/core/src/main/resources/schema/dependency-suppression.1.3.xsd"
+                file="owasp-suppressions.xml"
+                version="1.3" />
+    </component>
+</project>
